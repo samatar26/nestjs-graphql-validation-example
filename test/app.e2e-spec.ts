@@ -3,7 +3,14 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+const bookMutation = `
+mutation updateBook($title: String!) {
+  updateBook(title: $title) {
+    title
+  }
+}`;
+
+describe('Book mutation', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
@@ -15,10 +22,13 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  describe('when the title is shorter than 3 character', () => {
+    it('throws an error', async () => {
+      const { statusCode, body } = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({ query: bookMutation, variables: { title: '0' } });
+
+      expect(statusCode).toEqual(400);
+    });
   });
 });
